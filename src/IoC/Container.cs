@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace IoC {
+namespace IoC
+{
     public class Container
     {
         readonly Dictionary<Type, object> instances = new Dictionary<Type, object>();
         readonly Dictionary<Type, Tuple<Type, InstanceOption>> map = new Dictionary<Type, Tuple<Type, InstanceOption>>();
 
-        public void Register<T, TS>(TS instance = null, InstanceOption option = InstanceOption.Default) where TS : class, T
+        public Container Register<T, TS>(TS instance = null, InstanceOption option = InstanceOption.Default) where TS : class, T
         {
             if (instance == null)
             {
@@ -19,11 +20,13 @@ namespace IoC {
             {
                 instances.Add(typeof(T), instance);
             }
+
+            return this;
         }
 
-        public void Register<T>(T instance = null, InstanceOption option = InstanceOption.Default) where T : class
+        public Container Register<T>(T instance = null, InstanceOption option = InstanceOption.Default) where T : class
         {
-            Register<T, T>(instance, option);
+            return Register<T, T>(instance, option);
         }
 
         public T Resolve<T>()
@@ -73,5 +76,28 @@ namespace IoC {
         Default,
         Singleton,
         InScope
+    }
+
+    public static class ContainerExtensions
+    {
+        public static Container AddSingleton<T>(this Container container) where T : class
+        {
+            return container?.Register<T, T>(null, InstanceOption.Singleton);
+        }
+
+        public static Container AddSingleton<T, TS>(this Container container) where TS : class, T
+        {
+            return container?.Register<T, TS>(null, InstanceOption.Singleton);
+        }
+
+        public static Container AddScoped<T>(this Container container) where T : class
+        {
+            return container?.Register<T, T>(null, InstanceOption.InScope);
+        }
+        public static Container AddScoped<T, TS>(this Container container) where TS : class, T
+        {
+            return container?.Register<T, TS>(null, InstanceOption.InScope);
+        }
+
     }
 }
