@@ -5,6 +5,7 @@ using System.Reflection;
 
 namespace IoC
 {
+    // Test
     public class Container
     {
         readonly Dictionary<Type, object> instances = new Dictionary<Type, object>();
@@ -24,20 +25,15 @@ namespace IoC
             return this;
         }
 
+        // TODO: rethink instance passing;
         public Container Register<T>(T instance = null, InstanceOption option = InstanceOption.Default) where T : class
         {
             return Register<T, T>(instance, option);
         }
 
-        public T Resolve<T>()
-        {
-            return (T)Resolve(typeof(T), new Dictionary<Type, object>());
-        }
+        public T Resolve<T>() => (T)Resolve(typeof(T));
 
-        public object Resolve(Type t)
-        {
-            return Resolve(t, new Dictionary<Type, object>());
-        }
+        public object Resolve(Type t) => Resolve(t, new Dictionary<Type, object>());
 
         protected virtual object Resolve(Type t, Dictionary<Type, object> scope)
         {

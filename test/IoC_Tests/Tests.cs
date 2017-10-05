@@ -1,5 +1,6 @@
 ﻿using Xunit;
 using IoC;
+using System;
 
 namespace Tests
 {
@@ -23,6 +24,14 @@ namespace Tests
             Assert.Null(container.AddScoped<ServiceMock>());
             Assert.Null(container.AddSingleton<IServiceMock, ServiceMock>());
             Assert.Null(container.AddScoped<IServiceMock, ServiceMock>());
+        }
+
+        [Fact]
+        public void ResolveTest()
+        {
+            var container = CreateContainerIncludeScoped();
+            Assert.NotNull(container.Resolve(typeof(ScopeMock)) as ScopeMock);
+            Assert.NotNull(container.Resolve<ScopeMock>());
         }
 
         [Fact]
@@ -55,6 +64,14 @@ namespace Tests
             Assert.NotSame(scopeA.ServiceB, scopeB.ServiceB);
         }
 
+    [Fact]
+        void DefaultValueTest() {
+            var container = new Container();
+            container.Register<IDefaultValue, DefaultValueMock>();
+
+            container.Resolve<IDefaultValue>().DoIt(true);
+        }
+
         private Container CreateContainerIncludeSingleton()
         {
             return new Container().AddSingleton<IServiceMock, ServiceMock>().Register<ScopeMock>();
@@ -74,6 +91,14 @@ namespace Tests
         }
     }
 
+    public class DefaultValueMock : IDefaultValue
+    {
+        public void DoIt(bool collect = true)
+        {
+            Console.WriteLine("done");
+        }
+    }
+
     public class ScopeMock
     {
 
@@ -89,5 +114,9 @@ namespace Tests
     public interface IServiceMock
     {
         int Id { get; set; }
+    }
+
+    public interface IDefaultValue {
+        void DoIt(bool collect = true);
     }
 }
