@@ -9,28 +9,26 @@ namespace IoC
     {
         Dictionary<Type, object> Instances { get; } = new Dictionary<Type, object>();
 
-        Dictionary<Type, (Type, InstanceOption)> Map { get; } =
-            new Dictionary<Type, (Type, InstanceOption)>();
+        Dictionary<Type, (Type, ConstructorInfo, InstanceOption)> Map { get; } =
+            new Dictionary<Type, (Type, ConstructorInfo, InstanceOption)>();
 
-        public Container Register<T, TS>(TS instance = null, InstanceOption option = InstanceOption.Default) where TS : class, T
+        public Container Register<T, TS>(TS instance) where TS : class, T
         {
-            var type = typeof(T);
-            if (instance == null)
-            {
-                Map.Add(type, (typeof(TS), option));
-            }
-            else
-            {
-                Instances.Add(type, instance);
-            }
-
+            Instances.Add(typeof(T), instance ?? throw new NullReferenceException());
             return this;
         }
 
-        // TODO: rethink instance passing;
-        public Container Register<T>(T instance = null, InstanceOption option = InstanceOption.Default) where T : class
+        public Container Register<T, TS>(InstanceOption option = InstanceOption.Default) where TS : class, T
         {
-            return Register<T, T>(instance, option);
+            var type = typeof(T);
+            var constructor = GetConstructorInfo<TS>();
+            Map.Add(typeof(T), (constructor.DeclaringType, constructor, option));
+            return this;
+        }
+
+        public Container Register<T>(InstanceOption option = InstanceOption.Default) where T : class
+        {
+            return Register<T, T>(option);
         }
 
         public T Resolve<T>() => (T)Resolve(typeof(T), CreateScope());
@@ -45,12 +43,9 @@ namespace IoC
                 return o;
             }
 
-            var (type, option) = Map[t];
-
-            var ci = type.GetTypeInfo().DeclaredConstructors.First(i => i.IsPublic);
-
-            object instance = Activator.CreateInstance(type,
-                ci.GetParameters().Select(i => Resolve(i.ParameterType, scope)).ToArray());
+            var (type, constructor, option) = Map[t];
+            var instance = Activator.CreateInstance(type,
+                constructor.GetParameters().Select(i => Resolve(i.ParameterType, scope)).ToArray());
 
             switch (option)
             {
@@ -66,6 +61,9 @@ namespace IoC
         }
 
         Dictionary<Type, object> CreateScope() => new Dictionary<Type, object>();
+
+        ConstructorInfo GetConstructorInfo<T>() =>
+            (typeof(T)).GetTypeInfo().DeclaredConstructors.First(i => i.IsPublic);
     }
 
     public enum InstanceOption
@@ -73,27 +71,5 @@ namespace IoC
         Default,
         Singleton,
         InScope
-    }
-
-    public static class ContainerExtensions
-    {
-        public static Container AddSingleton<T>(this Container container) where T : class
-        {
-            return container?.Register<T, T>(null, InstanceOption.Singleton);
-        }
-
-        public static Container AddSingleton<T, TS>(this Container container) where TS : class, T
-        {
-            return container?.Register<T, TS>(null, InstanceOption.Singleton);
-        }
-
-        public static Container AddScoped<T>(this Container container) where T : class
-        {
-            return container?.Register<T, T>(null, InstanceOption.InScope);
-        }
-        public static Container AddScoped<T, TS>(this Container container) where TS : class, T
-        {
-            return container?.Register<T, TS>(null, InstanceOption.InScope);
-        }
     }
 }

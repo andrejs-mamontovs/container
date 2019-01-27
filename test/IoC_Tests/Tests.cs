@@ -17,6 +17,13 @@ namespace Tests
         }
 
         [Fact]
+        public void NullReferenceExceptionTest()
+        {
+            Assert.Throws<NullReferenceException>(
+                () => new Container().Register<IServiceMock, ServiceMock>(null));
+        }
+
+        [Fact]
         public void NullSafeTest()
         {
             Container container = null;
@@ -64,8 +71,9 @@ namespace Tests
             Assert.NotSame(scopeA.ServiceB, scopeB.ServiceB);
         }
 
-    [Fact]
-        void DefaultValueTest() {
+        [Fact]
+        void DefaultValueTest()
+        {
             var container = new Container();
             container.Register<IDefaultValue, DefaultValueMock>();
 
@@ -116,7 +124,8 @@ namespace Tests
         int Id { get; set; }
     }
 
-    public interface IDefaultValue {
+    public interface IDefaultValue
+    {
         void DoIt(bool collect = true);
     }
 }
